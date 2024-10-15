@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write  # 允许写入内容
+
 jobs:
   build:
     runs-on: ubuntu-latest
