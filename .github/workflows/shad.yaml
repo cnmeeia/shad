@@ -36,27 +36,28 @@ jobs:
           cargo check
           cargo build --release
 
-      - name: Install Shadowsocks-rust
-        run: |
-          cd shadowsocks-rust
-          make install TARGET=release
+      - name: Create release directory
+        run: mkdir -p release
 
-      - name: Upload binaries
+      - name: Copy binaries
         run: |
-          mkdir -p release
           cp shadowsocks-rust/target/release/ssserver release/
           cp shadowsocks-rust/target/release/sslocal release/
           cp shadowsocks-rust/target/release/ssmanager release/
           cp shadowsocks-rust/target/release/ssurl release/
-          cp shadowsocks-rust/target/release/ssr local release/
           # 其他需要上传的二进制文件
 
-      - name: Commit and push binaries
+      - name: Compress binaries
+        run: |
+          cd release
+          tar -czvf shadowsocks-rust-binaries.tar.gz *
+
+      - name: Commit and push compressed binaries
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add release/*
-          git commit -m "Add compiled binaries"
+          git add release/shadowsocks-rust-binaries.tar.gz
+          git commit -m "Add compressed binaries"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
