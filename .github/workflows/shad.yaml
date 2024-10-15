@@ -1,0 +1,62 @@
+name: Build Shadowsocks-rust
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install build-essential
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Install Rust
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Check Cargo and Rust version
+        run: |
+          cargo --version
+          rustc -V
+
+      - name: Clone Shadowsocks-rust
+        run: git clone https://github.com/shadowsocks/shadowsocks-rust.git
+
+      - name: Build Shadowsocks-rust
+        run: |
+          cd shadowsocks-rust
+          export SODIUM_USE_PKG_CONFIG=1
+          cargo check
+          cargo build --release
+
+      - name: Install Shadowsocks-rust
+        run: |
+          cd shadowsocks-rust
+          make install TARGET=release
+
+      - name: Upload binaries
+        run: |
+          mkdir -p release
+          cp shadowsocks-rust/target/release/ssserver release/
+          cp shadowsocks-rust/target/release/sslocal release/
+          cp shadowsocks-rust/target/release/ssmanager release/
+          cp shadowsocks-rust/target/release/ssurl release/
+          cp shadowsocks-rust/target/release/ssr local release/
+          # 其他需要上传的二进制文件
+
+      - name: Commit and push binaries
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add release/*
+          git commit -m "Add compiled binaries"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
